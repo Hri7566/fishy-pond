@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "main": "build/server/index.js",
-    "type": "module",
+    "type": "commonjs",
     "scripts": {
         "build": "node scripts/esbuild.js",
         "start": "node .",

@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import FastifyStatic from "@fastify/static";
 import { join, resolve } from "path";
+import { Logger } from "./util/Logger";
 import { env } from "./util/env";
 
 const fastify = Fastify({
@@ -12,3 +13,5 @@ fastify.register(FastifyStatic, {
 });
 
 fastify.listen({ port: env.PORT });
+
+console.log("Started on port " + env.PORT);

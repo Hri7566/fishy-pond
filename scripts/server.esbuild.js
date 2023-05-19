@@ -1,7 +1,7 @@
 console.time("Server");
 
-import * as esbuild from "esbuild";
-import * as fs from "fs/promises";
+const esbuild = require("esbuild");
+const fs = require("fs/promises");
 
 (async () => {
     await fs.mkdir("build/server", {
