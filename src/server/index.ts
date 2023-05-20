@@ -1,17 +1,7 @@
-import Fastify from "fastify";
-import FastifyStatic from "@fastify/static";
-import { join, resolve } from "path";
-import { Logger } from "./util/Logger";
+import fastify from "./api/fastify";
 import { env } from "./util/env";
+import { cache } from "./data/cache";
 
-const fastify = Fastify({
-    logger: true
+fastify.listen({ port: env.PORT }).then(() => {
+    process.stdout.write(`Listening on port ${env.PORT}\n`);
 });
-
-fastify.register(FastifyStatic, {
-    root: join(__dirname, "public")
-});
-
-fastify.listen({ port: env.PORT });
-
-console.log("Started on port " + env.PORT);
