@@ -1,19 +1,22 @@
-import fastify from "../fastify";
+import type { FastifyReply, FastifyRequest } from "fastify";
+import { IDGenerator } from "../../crypto/IDGenerator";
 import { publicProcedure, router } from "../trpc";
-import { createContext } from "../trpc";
-import { fastifyTRPCPlugin } from "@trpc/server/adapters/fastify";
 
-const mainRouter = router({
-    status: publicProcedure.query(() => {
+export const mainRouter = router({
+    hi: publicProcedure.query(({ ctx }) => {
+        const id = IDGenerator.generateID(ctx.ip);
         return {
-            status: "online"
+            m: "hi"
         };
     })
 });
 
-export type MainRouter = typeof mainRouter;
+export const createMainContext = (req: FastifyRequest, rep: FastifyReply) => {
+    // Get IP directly, or optionally from X-Forwarded-For if provided by a proxy service
+    let ip = req.ip;
+    if (req.ips) ip = req.ips[0];
 
-fastify.register(fastifyTRPCPlugin, {
-    prefix: "/api",
-    trpcOptions: { router: mainRouter, createContext }
-});
+    return { ip };
+};
+
+export type MainRouter = typeof mainRouter;

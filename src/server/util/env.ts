@@ -11,7 +11,8 @@ export const env = createEnv({
         PORT: z
             .string()
             .transform(s => parseInt(s, 10))
-            .pipe(z.number())
+            .pipe(z.number()),
+        ID_SALT: z.string()
     },
     client: {},
     runtimeEnv: process.env
