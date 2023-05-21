@@ -3,8 +3,6 @@ import { createRoot } from "react-dom/client";
 import "./main.css";
 import { App } from "./app";
 
-console.log("I am a client");
-
 const domRoot = document.getElementById("root");
 
 if (domRoot) {

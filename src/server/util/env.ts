@@ -1,8 +1,5 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
-import { config as dotEnvConfig } from "dotenv";
-
-dotEnvConfig();
 
 export const env = createEnv({
     clientPrefix: "PUBLIC_",
@@ -14,6 +11,9 @@ export const env = createEnv({
             .pipe(z.number()),
         ID_SALT: z.string()
     },
-    client: {},
+    client: {
+        PUBLIC_API_ENDPOINT: z.string().url(),
+        PUBLIC_WS_ENDPOINT: z.string().url()
+    },
     runtimeEnv: process.env
 });

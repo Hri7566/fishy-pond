@@ -1,5 +1,6 @@
 console.time("Server");
 
+require("dotenv").config();
 const esbuild = require("esbuild");
 const fs = require("fs/promises");
 
@@ -22,7 +23,11 @@ const fs = require("fs/promises");
         define: {
             "process.env": JSON.stringify({
                 NODE_ENV: process.env.NODE_ENV,
-                PORT: process.env.PORT
+                PORT: process.env.PORT,
+                ID_SALT: process.env.ID_SALT,
+
+                PUBLIC_API_ENDPOINT: process.env.PUBLIC_API_ENDPOINT,
+                PUBLIC_WS_ENDPOINT: process.env.PUBLIC_WS_ENDPOINT
             })
         }
     });
