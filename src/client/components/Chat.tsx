@@ -16,14 +16,7 @@ interface ChatMessage {
 }
 
 export const Chat = () => {
-    const [chatList, setChatList] = useState([
-        {
-            m: "a",
-            a: "test",
-            p: { name: "hri7566", color: "#8d3f50" },
-            t: Date.now()
-        }
-    ] as ChatMessage[]);
+    const [chatList, setChatList] = useState([] as ChatMessage[]);
     let liKey = -1;
 
     const [placeholder, setPlaceholder] = useState(

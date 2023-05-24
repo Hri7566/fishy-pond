@@ -1,31 +1,34 @@
 import { observable } from "@trpc/server/observable";
 import { publicProcedure, router } from "../trpc";
-import { type EventCallback, eventBus } from "../../events";
+import {
+    type EventCallback,
+    serverEventBus,
+    ServerEvents
+} from "../../ServerEventBus";
 import { z } from "zod";
 
 export const channelRouter = router({
     ws: publicProcedure.subscription(opts => {
         return observable(emit => {
-            const callMap: Record<string, EventCallback> = {
-                a: (msg: any) => {
-                    console.log("Sending message", msg);
-                    emit.next({
-                        m: "a",
-                        a: msg.a,
-                        p: msg.p
-                    });
-                }
+            // Create a callback map
+            const callMap: any = {
+                chat: msg => {},
+                hi: msg => {}
             };
 
             // Register all callbacks
-            for (const key of Object.keys(callMap)) {
-                eventBus.on(`channel.${key}`, callMap[key]);
+            for (const key of Object.keys(callMap) as Array<
+                keyof ServerEvents
+            >) {
+                serverEventBus.on(key, callMap[key]);
             }
 
             return () => {
-                for (const key of Object.keys(callMap)) {
-                    // Deregister all callbacks
-                    eventBus.off(`channel.${key}`, callMap[key]);
+                // Deregister all callbacks
+                for (const key of Object.keys(callMap) as Array<
+                    keyof ServerEvents
+                >) {
+                    serverEventBus.off("chat", callMap[key]);
                 }
             };
         });
@@ -38,18 +41,21 @@ export const channelRouter = router({
             })
         )
         .mutation(opts => {
-            const message = {
-                m: "a",
+            if (!opts.ctx.userId) return;
+            const message: ServerEvents["chat"] = {
+                m: "chat",
                 a: opts.input.message,
                 t: Date.now(),
                 p: {
                     name: opts.ctx.name,
-                    _id: opts.ctx.userId
+                    _id: opts.ctx.userId,
+                    color: opts.ctx.userColor,
+                    id: opts.ctx.participantId
                 }
             };
 
             console.log("Received channel message:", opts);
-            eventBus.emit("channel.a", message);
+            serverEventBus.emit("chat", message);
 
             return message;
         })

@@ -1,4 +1,4 @@
-// TODO finish command callback
+// TODO finish command callback parameters
 export type CommandCallback = () =>
     | Promise<string | undefined>
     | string
