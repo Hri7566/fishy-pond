@@ -1,64 +1,102 @@
 import { observable } from "@trpc/server/observable";
 import { publicProcedure, router } from "../trpc";
-import {
-    type EventCallback,
-    serverEventBus,
-    ServerEvents
-} from "../../ServerEventBus";
+import { serverEventBus, ServerEvents } from "../../ServerEventBus";
 import { z } from "zod";
+import { ErrorNoChannel, ErrorNotAuthenticated } from "../errors";
+import { Channel } from "../../Channel";
 
 export const channelRouter = router({
-    ws: publicProcedure.subscription(opts => {
+    subscribe: publicProcedure.subscription(opts => {
         return observable(emit => {
-            // Create a callback map
-            const callMap: any = {
-                chat: msg => {},
-                hi: msg => {}
-            };
-
-            // Register all callbacks
-            for (const key of Object.keys(callMap) as Array<
-                keyof ServerEvents
-            >) {
-                serverEventBus.on(key, callMap[key]);
-            }
+            // Create an event subscriber
+            const eventSubscriber = serverEventBus.subscribe(
+                opts.ctx.participantId,
+                emit,
+                opts.ctx
+            );
 
             return () => {
-                // Deregister all callbacks
-                for (const key of Object.keys(callMap) as Array<
-                    keyof ServerEvents
-                >) {
-                    serverEventBus.off("chat", callMap[key]);
-                }
+                // Disable the event subscriber
+                eventSubscriber.destroy();
             };
         });
     }),
 
-    a: publicProcedure
+    chat: publicProcedure
         .input(
             z.object({
                 message: z.string().nonempty()
             })
         )
         .mutation(opts => {
-            if (!opts.ctx.userId) return;
+            if (!opts.ctx.userId) return ErrorNotAuthenticated;
+
             const message: ServerEvents["chat"] = {
                 m: "chat",
-                a: opts.input.message,
+                message: opts.input.message,
                 t: Date.now(),
                 p: {
                     name: opts.ctx.name,
                     _id: opts.ctx.userId,
                     color: opts.ctx.userColor,
                     id: opts.ctx.participantId
-                }
+                },
+                channel: opts.ctx.currentChannel
             };
 
-            console.log("Received channel message:", opts);
             serverEventBus.emit("chat", message);
 
             return message;
-        })
+        }),
+
+    getChatHistory: publicProcedure.mutation(opts => {
+        if (!opts.ctx.userId) return ErrorNotAuthenticated;
+
+        const channel = Channel.channels.get(opts.ctx.currentChannel);
+
+        if (!channel) return ErrorNoChannel;
+
+        return channel.chatHistory;
+    }),
+
+    setChannel: publicProcedure
+        .input(
+            z.object({
+                channelId: z.string()
+            })
+        )
+        .mutation(opts => {
+            if (!opts.ctx.userId) return ErrorNotAuthenticated;
+            const channel = Channel.channels.get(opts.input.channelId);
+            const previousChannel = Channel.channels.get(
+                opts.ctx.currentChannel
+            );
+
+            if (!channel) return ErrorNoChannel;
+
+            if (previousChannel) {
+                previousChannel.removeUser(opts.ctx.userId);
+            }
+
+            channel.addUser(opts.ctx.userId);
+            opts.ctx.currentChannel = channel.id;
+
+            return {
+                channelId: opts.ctx.currentChannel
+            };
+        }),
+
+    getChannelInfo: publicProcedure.query(opts => {
+        const channel = Channel.channels.get(opts.ctx.currentChannel);
+        if (!channel) return ErrorNoChannel;
+
+        return channel.getInfo();
+    }),
+
+    getChannelList: publicProcedure.query(opts => {
+        const channelList = Channel.getChannelList();
+        return channelList;
+    })
 });
 
 export type ChannelRouter = typeof channelRouter;

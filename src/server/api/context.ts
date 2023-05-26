@@ -21,6 +21,7 @@ export const createContext = (opts: CreateFastifyContextOptions) => {
     let userColor = "#fff";
     if (ip) userColor = IDGenerator.getColor(userId);
     // TODO Get username and color from database
+    // TODO Change the context
 
     let currentChannel = defaultChannels[0].id;
 

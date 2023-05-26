@@ -1,7 +1,33 @@
 import EventEmitter from "events";
 import { Participant, ServerEvents } from "./ServerEventBus";
 
+export interface ChannelInfo {
+    // Don't include users
+    id: string;
+    nearby: string[];
+}
+
 export class Channel extends EventEmitter {
+    public static channels = new Map<Channel["id"], Channel>();
+
+    public static addChannel(channel: Channel) {
+        this.channels.set(channel.id, channel);
+    }
+
+    public static removeChannel(channelId: string) {
+        this.channels.delete(channelId);
+    }
+
+    public static getChannelList() {
+        let list = new Array<ChannelInfo>();
+
+        for (const [id, channel] of this.channels) {
+            list.push(channel.getInfo());
+        }
+
+        return list;
+    }
+
     public chatHistory: ServerEvents["chat"][] = [];
     public usersInChannel: string[] = [];
     public nearbyChannels: string[] = [];
@@ -9,6 +35,8 @@ export class Channel extends EventEmitter {
     constructor(public id: string, ...nearby: string[]) {
         super();
         this.nearbyChannels.push(...nearby);
+
+        Channel.channels.set(this.id, this);
     }
 
     /**
@@ -40,5 +68,16 @@ export class Channel extends EventEmitter {
         if (!this.hasUser(userId)) return false;
         this.usersInChannel.splice(this.usersInChannel.indexOf(userId), 1);
         return true;
+    }
+
+    /**
+     * Get channel information
+     * @returns Channel information
+     */
+    public getInfo(): ChannelInfo {
+        return {
+            id: this.id,
+            nearby: this.nearbyChannels
+        };
     }
 }

@@ -1,6 +1,7 @@
 import React from "react";
 import { Chat } from "./components/Chat";
 import { Names } from "./components/names/Names";
+import { Bottom } from "./components/bottom/Bottom";
 
 export const Main = () => {
     return (
@@ -9,6 +10,7 @@ export const Main = () => {
             <p>This site is under construction.</p>
             <Names />
             <Chat />
+            <Bottom />
         </main>
     );
 };

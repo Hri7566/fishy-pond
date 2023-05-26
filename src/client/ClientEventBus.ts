@@ -1,7 +1,7 @@
 import EventEmitter from "events";
 
-export type EventCallback<Event extends keyof ClientEvents> = (
-    msg: ClientEvents[Event]
+export type EventCallback<Event extends keyof IncomingClientEvents> = (
+    msg: IncomingClientEvents[Event]
 ) => void;
 
 class ClientEventBus extends EventEmitter {
@@ -9,7 +9,7 @@ class ClientEventBus extends EventEmitter {
         super();
     }
 
-    public on<Event extends keyof ClientEvents>(
+    public on<Event extends keyof IncomingClientEvents>(
         event: Event,
         listener: EventCallback<Event>
     ): this {
@@ -17,7 +17,7 @@ class ClientEventBus extends EventEmitter {
         return this;
     }
 
-    public off<Event extends keyof ClientEvents>(
+    public off<Event extends keyof IncomingClientEvents>(
         event: Event,
         listener: EventCallback<Event>
     ): this {
@@ -25,7 +25,7 @@ class ClientEventBus extends EventEmitter {
         return this;
     }
 
-    public once<Event extends keyof ClientEvents>(
+    public once<Event extends keyof IncomingClientEvents>(
         event: Event,
         listener: EventCallback<Event>
     ): this {
@@ -33,7 +33,7 @@ class ClientEventBus extends EventEmitter {
         return this;
     }
 
-    public emit<Event extends keyof ClientEvents>(
+    public emit<Event extends keyof IncomingClientEvents>(
         event: Event,
         ...args: Parameters<EventCallback<Event>>
     ): boolean {
@@ -53,11 +53,17 @@ export interface Participant extends User {
     id: string;
 }
 
-export interface ClientEvents {
+export interface IncomingClientEvents {
     chat: {
         m: string;
         a: string;
         t: number;
         p: Participant;
     };
+}
+
+export interface OutgoingClientEvents {
+    chat: {
+        
+    }
 }

@@ -1,6 +1,12 @@
 import EventEmitter from "events";
+import { EventSubscriber } from "./EventSubscriber";
+import { Observer } from "@trpc/server/observable";
+import { Context } from "./api/context";
+import { ChannelInfo } from "./Channel";
 
-export type EventCallback = (msg: ServerEvents[keyof ServerEvents]) => void;
+export type EventCallback<EventID extends keyof ServerEvents> = (
+    msg: ServerEvents[EventID]
+) => void;
 
 class ServerEventBus extends EventEmitter {
     constructor() {
@@ -9,7 +15,7 @@ class ServerEventBus extends EventEmitter {
 
     public on<EventID extends keyof ServerEvents>(
         event: EventID,
-        listener: EventCallback
+        listener: EventCallback<EventID>
     ): this {
         super.on(event, listener);
         return this;
@@ -17,7 +23,7 @@ class ServerEventBus extends EventEmitter {
 
     public off<EventID extends keyof ServerEvents>(
         event: EventID,
-        listener: EventCallback
+        listener: EventCallback<EventID>
     ): this {
         super.off(event, listener);
         return this;
@@ -25,7 +31,7 @@ class ServerEventBus extends EventEmitter {
 
     public once<EventID extends keyof ServerEvents>(
         event: EventID,
-        listener: EventCallback
+        listener: EventCallback<EventID>
     ): this {
         super.once(event, listener);
         return this;
@@ -33,9 +39,47 @@ class ServerEventBus extends EventEmitter {
 
     public emit<EventID extends keyof ServerEvents>(
         event: EventID,
-        ...args: Parameters<EventCallback>
+        ...args: Parameters<EventCallback<EventID>>
     ): boolean {
         return super.emit(event, ...args);
+    }
+
+    // Subscription handler
+
+    protected subscribers = new Map<
+        Context["participantId"],
+        EventSubscriber
+    >();
+
+    public subscribe(
+        partId: Context["participantId"],
+        emit: Observer<unknown, unknown>,
+        ctx: Context
+    ) {
+        const eventSubscriber = new EventSubscriber(emit, ctx);
+        this.subscribers.set(partId, eventSubscriber);
+
+        for (const eventId of Object.keys(eventSubscriber.events)) {
+            const eventCallback =
+                eventSubscriber.events[eventId as keyof ServerEvents];
+            this.on(eventId as any, msg => {
+                if (eventSubscriber.isDestroyed()) return;
+                eventCallback(msg);
+            });
+        }
+
+        return eventSubscriber;
+    }
+
+    public unsubscribe(partId: Context["participantId"]) {
+        const eventSubscriber = this.subscribers.get(partId);
+        eventSubscriber?.destroy();
+        this.subscribers.delete(partId);
+    }
+
+    public getSubscriber(partId: Context["participantId"]) {
+        const eventSubscriber = this.subscribers.get(partId);
+        return eventSubscriber;
     }
 }
 
@@ -51,14 +95,16 @@ export interface Participant extends User {
     id: string;
 }
 
+export type ServerEventMap = {
+    [EventID in keyof ServerEvents]: (msg: ServerEvents[EventID]) => void;
+};
+
 export interface ServerEvents {
-    hi: {
-        m: "hi";
-    };
     chat: {
         m: "chat";
-        a: string;
+        message: string;
         t: number;
         p: Participant;
+        channel: string;
     };
 }
