@@ -17,10 +17,14 @@ export const Chat = () => {
     const aMutation = reactAPI.channel.chat.useMutation();
     const [inputValue, setInputValue] = useState("");
 
+    const chatHistoryMutation = reactAPI.channel.getChatHistory.useMutation();
+
     const sendChatMessage = (str: string) => {
-        aMutation.mutate({
-            message: str
-        });
+        console.log(
+            aMutation.mutate({
+                message: str
+            })
+        );
     };
 
     const onKeyDown: KeyboardEventHandler<HTMLInputElement> = evt => {
